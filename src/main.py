@@ -76,6 +76,89 @@ def get_user_favorites(username):
     user_fav = user_fav_characters + user_fav_planets
     return jsonify(user_fav)
 
+@app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
+def add_favorite_planet(planet_id):
+    body = request.get_json()
+    user = User.query.get(body['userid'])
+    planet_exists = Planet.query.get(planet_id) is not None
+    user_exists = user is not None
+    if not planet_exists:
+        raise APIException('Planet not found', status_code=404)
+    if not user_exists:
+        raise APIException('User not found', status_code=404)
+    
+    fav_exists = FavoritePlanet.query.filter_by(user_id=user.id, planet_id=planet_id).first() is not None
+    if not fav_exists and planet_exists and user_exists:
+        fav_planet = FavoritePlanet(planet_id=planet_id, user_id=user.id)
+        db.session.add(fav_planet)
+        db.session.commit()
+        return get_user_favorites(user.name)
+    else:
+        return "Favorite already exist", 200
+
+@app.route('/favorite/people/<int:character_id>', methods=['POST'])
+def add_favorite_people(character_id):
+    body = request.get_json()
+    user = User.query.get(body['userid'])
+    character_exists = Character.query.get(character_id) is not None
+    user_exists = user is not None
+    if not character_exists:
+        raise APIException('Character not found', status_code=404)
+    if not user_exists:
+        raise APIException('User not found', status_code=404)
+    
+    fav_exists = FavoriteCharacter.query.filter_by(user_id=user.id, character_id=character_id).first() is not None
+    if not fav_exists and character_exists and user_exists:
+        fav_character = FavoriteCharacter(character_id=character_id, user_id=user.id)
+        db.session.add(fav_character)
+        db.session.commit()
+        return get_user_favorites(user.name)
+    else:
+        return "Favorite already exist", 200
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
+def delete_favorite_planet(planet_id):
+    body = request.get_json()
+    user = User.query.get(body['userid'])
+    planet_exists = Planet.query.get(planet_id) is not None
+    user_exists = user is not None
+    if not planet_exists:
+        raise APIException('Planet not found', status_code=404)
+    if not user_exists:
+        raise APIException('User not found', status_code=404)
+    
+    favorite = FavoritePlanet.query.filter_by(user_id=user.id, planet_id=planet_id).first()
+    fav_exists = favorite is not None
+    if fav_exists and planet_exists and user_exists:
+        db.session.delete(favorite)
+        db.session.commit()
+        return get_user_favorites(user.name)
+    else:
+        raise APIException('Favorite not found', status_code=404)
+
+
+@app.route('/favorite/people/<int:character_id>', methods=['DELETE'])
+def delete_favorite_people(character_id):
+    body = request.get_json()
+    user = User.query.get(body['userid'])
+    character_exists = Character.query.get(character_id) is not None
+    user_exists = user is not None
+    if not character_exists:
+        raise APIException('Character not found', status_code=404)
+    if not user_exists:
+        raise APIException('User not found', status_code=404)
+    
+    favorite = FavoriteCharacter.query.filter_by(user_id=user.id, character_id=character_id).first()
+    fav_exists = favorite is not None
+    if fav_exists and character_exists and user_exists:
+        db.session.delete(favorite)
+        db.session.commit()
+        return get_user_favorites(user.name)
+    else:
+        raise APIException('Favorite not found', status_code=404)
+
+
+
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
     PORT = int(os.environ.get('PORT', 3000))
