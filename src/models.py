@@ -12,7 +12,7 @@ class Gender(str, enum.Enum):
 
 class Character(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(250), nullable=False)
+    name = db.Column(db.String(250), unique=True, nullable=False)
     height = db.Column(db.Integer, nullable=False)
     mass = db.Column(db.String(250), nullable=False)
     hair_color = db.Column(db.String(250), nullable=False)
@@ -47,7 +47,7 @@ class Character(db.Model):
 
 class Planet(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(250), nullable=False)
+    name = db.Column(db.String(250), unique=True, nullable=False)
     rotation_period = db.Column(db.Integer, nullable=False)
     orbital_period = db.Column(db.Integer, nullable=False)
     diameter = db.Column(db.Integer, nullable=False)
@@ -118,7 +118,7 @@ class FavoritePlanet(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), nullable=False)
-    email = db.Column(db.String(250), nullable=False)
+    email = db.Column(db.String(250), unique=True, nullable=False)
     password = db.Column(db.String(250), nullable=False)
     favorite_character = db.relationship('FavoriteCharacter', backref='user', lazy=True)
     favorite_planet = db.relationship('FavoritePlanet', backref='user', lazy=True)
