@@ -43,26 +43,32 @@ def login():
     password = request.json.get("password", None)
     user = User.query.filter_by(email=email, password=password).first()
     if user is None:
-        return jsonify({"msg": "Bad username or password"}), 401
+        raise APIException('Bad username or password', status_code=401)
 
     access_token = create_access_token(identity=email)
     return jsonify(access_token=access_token)
 
 @app.route('/people', methods=['GET'])
-def get_people():
+def get_person():
     people_query = Character.query.all()
     all_people = list(map(lambda x: x.serialize(), people_query))
     return jsonify(all_people), 200
 
 @app.route('/people/<int:id>', methods=['GET'])
-def get_person(id):
-    person = Character.query.get(id)
-    person = person.serialize()
-    return jsonify(person), 200
+def get_character(id):
+    character = Character.query.get(id)
+    if character is None:
+        raise APIException('Character not found', status_code=404)
+    character = character.serialize()
+    return jsonify(character), 200
 
 @app.route('/people', methods=['POST'])
 @jwt_required()
 def add_people():
+    character = Character.query.filter_by(name=request.json.get("name", None)).first()
+    if character is not None:
+        raise APIException('Character already exist', status_code=409)
+
     name = request.json.get("name", None)
     height = request.json.get("height", None)
     mass = request.json.get("mass", None)
@@ -139,12 +145,18 @@ def get_planets():
 @app.route('/planet/<int:id>', methods=['GET'])
 def get_planet(id):
     planet = Planet.query.get(id)
+    if planet is None:
+        raise APIException('Planet not found', status_code=404)
     planet = planet.serialize()
     return jsonify(planet), 200
 
 @app.route('/planets', methods=['POST'])
 @jwt_required()
 def add_planets():
+    planet = Planet.query.filter_by(name=request.json.get("name", None)).first()
+    if planet is not None:
+        raise APIException('Planet already exist', status_code=409)
+
     name = request.json.get("name", None)
     rotation_period = request.json.get("rotation_period", None)
     orbital_period = request.json.get("orbital_period", None)
@@ -224,12 +236,18 @@ def get_users():
 @app.route('/user/<int:id>', methods=['GET'])
 def get_user(id):
     user = User.query.get(id)
+    if user is None:
+        raise APIException('User not found', status_code=404)
     user = user.serialize()
     return jsonify(user), 200
 
 @app.route('/users', methods=['POST'])
 @jwt_required()
 def add_user():
+    user = User.query.filter_by(email=request.json.get("email", None)).first()
+    if user is not None:
+        raise APIException('User already exist', status_code=409)
+
     name = request.json.get("name", None)
     email = request.json.get("email", None)
     password = request.json.get("password", None)
@@ -304,9 +322,9 @@ def add_favorite_planet(planet_id):
         fav_planet = FavoritePlanet(planet_id=planet_id, user_id=user.id)
         db.session.add(fav_planet)
         db.session.commit()
-        return get_user_favorites(user.name)
+        return get_user_favorites()
     else:
-        return "Favorite already exist", 200
+        raise APIException('Favorite already exist', status_code=409)
 
 @app.route('/favorite/people/<int:character_id>', methods=['POST'])
 @jwt_required()
@@ -327,7 +345,7 @@ def add_favorite_people(character_id):
         db.session.commit()
         return get_user_favorites()
     else:
-        return "Favorite already exist", 200
+        raise APIException('Favorite already exist', status_code=409)
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
 @jwt_required()
