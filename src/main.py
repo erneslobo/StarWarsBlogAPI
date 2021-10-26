@@ -242,7 +242,6 @@ def get_user(id):
     return jsonify(user), 200
 
 @app.route('/users', methods=['POST'])
-@jwt_required()
 def add_user():
     user = User.query.filter_by(email=request.json.get("email", None)).first()
     if user is not None:
